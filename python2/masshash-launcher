@@ -1,0 +1,521 @@
+#!/usr/bin/python2
+# -*- coding: UTF-8 -*-
+
+"""
+*************************************************************************
+MassHash Launcher - A GTK+ launcher for MassHash
+Copyright (C) 2012 Jonathan Leicher
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*************************************************************************
+"""
+
+from __future__ import print_function, unicode_literals
+import sys
+import os
+import time
+import urllib2
+import subprocess
+from gi.repository import Gtk, Gdk, GLib
+
+#path to glade ui file
+glade_source_dir = '../data/masshash-launcher.glade'
+if os.path.isfile(glade_source_dir):
+    glade = glade_source_dir
+else:
+    glade = '/usr/share/masshash-launcher/masshash-launcher.glade'
+
+#GUI
+class GUI:
+
+    def __init__(self):
+        #path to masshash
+        same_dir = './masshash'
+        if os.path.exists(same_dir):
+            self.masshash = same_dir
+        else:
+            self.masshash = 'masshash'
+
+        #about dialog widget
+        self.ui_about_dialog = builder.get_object('aboutdialog1')
+
+        #file and folder dialog widgets
+        self.ui_file_dialog = builder.get_object('filechooserdialog1')
+        self.current_file_dialog_mapping = '' #used later to identify which entry field will be written to
+        self.ui_folder_dialog = builder.get_object('filechooserdialog2')
+        self.current_folder_dialog_mapping = ''
+
+        #preview and execute dialogs
+        self.ui_command = builder.get_object('textbuffer1')
+        self.ui_preview_dialog = builder.get_object('dialog1')
+        self.ui_execute_status = builder.get_object('label21')
+        self.ui_execute_status_spinner = builder.get_object('spinner1')
+        self.ui_execute_cancel_button = builder.get_object('button18')
+        self.ui_execute_close_button = builder.get_object('button19')
+        self.ui_execute_output = builder.get_object('textbuffer2')
+        self.ui_execute_dialog = builder.get_object('dialog2')
+
+        #ui widgets for single hash operation
+        self.ui_sing_file = builder.get_object('filechooserbutton1')
+        self.ui_sing_alg = builder.get_object('comboboxtext1')
+        self.ui_sing_alg.set_entry_text_column(0)
+        self.ui_sing_alg.set_active(0)
+
+        #ui widgets for hash list generation
+        self.ui_lg_dir = builder.get_object('entry7')
+        self.ui_lg_alg1 = builder.get_object('comboboxtext2')
+        self.ui_lg_alg1.set_entry_text_column(0)
+        self.ui_lg_alg1.set_active(0)
+        self.ui_lg_alg2 = builder.get_object('comboboxtext3')
+        self.ui_lg_alg2.set_entry_text_column(0)
+        self.ui_lg_alg2.set_active(0)
+        self.ui_lg_list_file = builder.get_object('entry1')
+
+        #ui widgets for hash list comparison
+        self.ui_lc_exist_list_file = builder.get_object('filechooserbutton4')
+        self.ui_lc_exist_list_file_timestamp = builder.get_object('label15')
+        self.ui_lc_exist_list_file_algs_used = builder.get_object('label16')
+        self.lc_dir_toggled = 'same'
+        self.ui_lc_exist_list_file_dir = builder.get_object('entry2')
+        self.ui_lc_mirror = builder.get_object('entry8')
+        self.ui_lc_report_file = builder.get_object('entry3')
+        self.lc_new_list_file_toggled = ''
+        self.ui_lc_new_list_file = builder.get_object('entry4')
+        self.lc_log_file_toggled = ''
+        self.ui_lc_log_file = builder.get_object('entry5')
+
+    #when the about menu item is selected...
+    def on_about_clicked(self, *args):
+        self.ui_about_dialog.show()
+
+    #when the about dialog box close button is pressed...
+    def on_about_close_clicked(self, *args):
+        self.ui_about_dialog.hide()
+
+    #when the masshash info menu item is selected...
+    def on_masshash_info_clicked(self, *args):
+        self.cancelled = False
+        self.command = self.masshash + " --version"
+        self.sp_command = [self.masshash]
+        self.sp_command.append("--version")
+        self.execute_start()
+        self.ui_execute_output.set_text("MassHash version info...")
+        self.sp = subprocess.Popen(self.sp_command, bufsize=4096, stderr=subprocess.PIPE)
+        data = None
+        while data == None:
+            time.sleep(0.1)
+            data = self.sp.poll()
+            while Gtk.events_pending():
+                Gtk.main_iteration()
+        if self.cancelled != True:
+            execute_output = self.sp.stderr.read()
+            self.ui_execute_output.set_text("MassHash version info...\n"+execute_output)
+            self.execute_complete()
+
+    #when the close button on the preview dialog box is pressed...
+    def on_preview_close(self, *args):
+        self.ui_preview_dialog.hide()
+
+    #this is called by other functions when the corresponding execute button is pressed
+    def execute_start(self, *args):
+        self.ui_execute_dialog.show()
+        self.ui_execute_cancel_button.set_sensitive(True)
+        self.ui_execute_close_button.set_sensitive(False)
+        self.ui_command.set_text(self.command)
+        self.ui_execute_status.set_text("Processing...")
+        self.ui_execute_status_spinner.show()
+        self.ui_execute_status_spinner.start()
+
+    #this is called by other functions when execution of the command is complete
+    def execute_complete(self, *args):
+        self.ui_execute_status_spinner.stop()
+        self.ui_execute_status_spinner.hide()
+        self.ui_execute_status.set_text("Complete.")
+        self.ui_execute_cancel_button.set_sensitive(False)
+        self.ui_execute_close_button.set_sensitive(True)
+
+    #when the cancel button on the execution dialog box is pressed...
+    def on_execute_cancelled(self, *args):
+        self.ui_execute_cancel_button.set_sensitive(False)
+        self.sp.kill()
+        self.ui_execute_status.set_text("Cancelled.")
+        self.ui_execute_status_spinner.stop()
+        self.ui_execute_status_spinner.hide()
+        self.ui_execute_output.set_text("Execution of the command was cancelled.")
+        self.ui_execute_close_button.set_sensitive(True)
+        self.cancelled = True
+
+    #when the close button on the execution dialog box is pressed...
+    def on_execute_close(self, *args):
+        self.ui_execute_dialog.hide()
+
+    #when the cancel button on the folder selection dialog box is pressed...
+    def on_folder_dialog_cancel_clicked(self, *args):
+        self.ui_folder_dialog.hide()
+
+    #when the ok button on the folder selection dialog box is pressed...
+    def on_folder_dialog_ok_clicked(self, *args):
+        self.folder_dialog = self.ui_folder_dialog.get_uri()
+        self.folder_dialog = urllib2.url2pathname(self.folder_dialog)
+        self.folder_dialog = self.folder_dialog[7:]
+        if self.current_folder_dialog_mapping == "lg_dir":
+            self.ui_lg_dir.set_text(self.folder_dialog)
+        elif self.current_folder_dialog_mapping == "lc_mirror":
+            self.ui_lc_mirror.set_text(self.folder_dialog)
+        else:
+            pass
+        self.ui_folder_dialog.hide()
+
+    #when the folder is changed in the file selection dialog box...
+    def on_file_dialog_folder_changed(self, *args):
+        self.ui_file_dialog.set_current_name("")
+
+    #when the cancel button on the file selection dialog box is pressed...
+    def on_file_dialog_cancel_clicked(self, *args):
+        self.ui_file_dialog.hide()
+
+    #when the ok button on the file selection dialog box is pressed...
+    def on_file_dialog_ok_clicked(self, *args):
+        self.file_dialog = self.ui_file_dialog.get_filename()
+        if self.current_file_dialog_mapping == "lg_list_file":
+            self.ui_lg_list_file.set_text(self.file_dialog)
+        elif self.current_file_dialog_mapping == "lc_report_file":
+            self.ui_lc_report_file.set_text(self.file_dialog)
+        elif self.current_file_dialog_mapping == "lc_new_list_file":
+            self.ui_lc_new_list_file.set_text(self.file_dialog)
+        elif self.current_file_dialog_mapping == "lc_log_file":
+            self.ui_lc_log_file.set_text(self.file_dialog)
+        else:
+            pass
+        self.ui_file_dialog.hide()
+
+    #generates the string of the "single hash" command after retrieving the current values of the corresponding GUI widgets
+    def get_sing_command(self, *args):
+        self.sing_file = self.ui_sing_file.get_filename()
+        self.sing_alg = self.ui_sing_alg.get_active_text()
+        command = self.masshash + " single " + self.sing_alg
+        sp_command = [self.masshash]
+        sp_command.append("single")
+        sp_command.append(self.sing_alg)
+        try:
+            if self.sing_file != None:
+                self.sing_file = unicode(self.sing_file, 'utf8')
+                command = command + ' "' + self.sing_file + '"'
+                sp_command.append(self.sing_file)
+            else:
+                command = "Error: A file was not specified."
+                raise
+        except:
+            pass
+        self.command = command
+        self.sp_command = sp_command
+
+    #when the preview button for "single hash" is pressed...
+    def on_sing_preview_clicked(self, *args):
+        self.get_sing_command()
+        self.ui_preview_dialog.show()
+        self.ui_command.set_text(self.command)
+
+    #when the execute button for "single hash" is pressed...
+    def on_sing_execute_clicked(self, *args):
+        self.cancelled = False
+        self.get_sing_command()
+        self.execute_start()
+        self.ui_execute_output.set_text("Generating hash...")
+        self.sp = subprocess.Popen(self.sp_command, bufsize=4096, stdout=subprocess.PIPE)
+        data = None
+        while data == None:
+            time.sleep(0.1)
+            data = self.sp.poll()
+            while Gtk.events_pending():
+                Gtk.main_iteration()
+        if self.cancelled != True:
+            execute_output = self.sp.stdout.read()
+            self.ui_execute_output.set_text(execute_output)
+            self.execute_complete()
+
+    #when the directory browse button for "list generate" is pressed...
+    def on_lg_dir_browse_clicked(self, *args):
+        self.current_folder_dialog_mapping = "lg_dir"
+        lg_dir = self.ui_lg_dir.get_text()
+        lg_dir = unicode(lg_dir, 'utf8')
+        self.ui_folder_dialog.show()
+        if lg_dir != "":
+            self.ui_folder_dialog.set_current_folder(lg_dir)
+
+    #when the list file browse button for "list generate" is pressed...
+    def on_lg_list_file_browse_clicked(self, *args):
+        self.current_file_dialog_mapping = "lg_list_file"
+        lg_list_file = self.ui_lg_list_file.get_text()
+        lg_list_file = unicode(lg_list_file, 'utf8')
+        self.ui_file_dialog.show()
+        if lg_list_file != "":
+            self.ui_file_dialog.set_filename(lg_list_file)
+
+    #generates the string of the "list generate" command after retrieving the current values of the corresponding GUI widgets
+    def get_lg_command(self, *args):
+        self.lg_dir = self.ui_lg_dir.get_text()
+        self.lg_dir = unicode(self.lg_dir, 'utf8')
+        self.lg_alg1 = self.ui_lg_alg1.get_active_text()
+        self.lg_alg2 = self.ui_lg_alg2.get_active_text()
+        self.lg_list_file = self.ui_lg_list_file.get_text()
+        self.lg_list_file = unicode(self.lg_list_file, 'utf8')
+        command = self.masshash + " list"
+        sp_command = [self.masshash]
+        sp_command.append("list")
+        try:
+            if self.lg_alg2 != "None":
+                command = command + " -b " + self.lg_alg2
+                sp_command.append("-b")
+                sp_command.append(self.lg_alg2)
+            command = command + " " + self.lg_alg1
+            sp_command.append(self.lg_alg1)
+            if self.lg_dir != "":
+                trailing_slash = self.lg_dir[-1:]
+                if trailing_slash != '/':
+                    self.lg_dir = self.lg_dir + "/"
+                command = command + ' "' + self.lg_dir + '"'
+                sp_command.append(self.lg_dir)
+            else:
+                command = "Error: The directory was not specified."
+                raise
+            if self.lg_list_file != "":
+                command = command + ' "' + self.lg_list_file + '"'
+                sp_command.append(self.lg_list_file)
+            else:
+                command = "Error: The list file was not specified."
+                raise
+        except:
+            pass
+        self.command = command
+        self.sp_command = sp_command
+
+    #when the preview button for "list generate" is pressed...
+    def on_lg_preview_clicked(self, *args):
+        self.get_lg_command()
+        self.ui_preview_dialog.show()
+        self.ui_command.set_text(self.command)
+
+    #when the execute button for "list generate" is pressed...
+    def on_lg_execute_clicked(self, *args):
+        self.cancelled = False
+        self.get_lg_command()
+        self.execute_start()
+        self.ui_execute_output.set_text("Generating list of hashes...")
+        self.sp = subprocess.Popen(self.sp_command, bufsize=4096, stdout=subprocess.PIPE)
+        data = None
+        while data == None:
+            time.sleep(0.1)
+            data = self.sp.poll()
+            while Gtk.events_pending():
+                Gtk.main_iteration()
+        if self.cancelled != True:
+            execute_output = self.sp.stdout.read()
+            self.ui_execute_output.set_text(execute_output)
+            self.execute_complete()
+
+    #when same directory radio button on "list compare" is toggled on by user...
+    def on_lc_same_dir_toggled(self, *args):
+        self.lc_dir_toggled = 'same'
+
+    #when mirror radio button on "list compare" is toggled on by user...
+    def on_lc_mirror_dir_toggled(self, *args):
+        self.lc_dir_toggled = 'mirror'
+
+    #when the mirror browse button for "list compare" is pressed...
+    def on_lc_mirror_browse_clicked(self, *args):
+        self.current_folder_dialog_mapping = "lc_mirror"
+        lc_mirror = self.ui_lc_mirror.get_text()
+        self.ui_folder_dialog.show()
+        if lc_mirror != "":
+            self.ui_folder_dialog.set_current_folder(lc_mirror)
+        else:
+            self.ui_folder_dialog.set_current_folder("")
+
+    #when the report file browse button for "list compare" is pressed...
+    def on_lc_report_file_browse_clicked(self, *args):
+        self.current_file_dialog_mapping = "lc_report_file"
+        lc_report_file = self.ui_lc_report_file.get_text()
+        self.ui_file_dialog.show()
+        if lc_report_file != "":
+            self.ui_file_dialog.set_filename(lc_report_file)
+        else:
+            self.ui_file_dialog.set_current_name("")
+
+    #when new list file checkbox on "list compare" is checked or unchecked by user...
+    def on_lc_new_list_file_toggled(self, *args):
+        if self.lc_new_list_file_toggled == '':
+            self.lc_new_list_file_toggled = 'checked'
+        else:
+            self.lc_new_list_file_toggled = ''
+
+    #when log file checkbox on "list compare" is checked or unchecked by user...
+    def on_lc_log_file_toggled(self, *args):
+        if self.lc_log_file_toggled == '':
+            self.lc_log_file_toggled = 'checked'
+        else:
+            self.lc_log_file_toggled = ''
+
+    #when the new list file browse button for "list compare" is pressed...
+    def on_lc_new_list_file_browse_clicked(self, *args):
+        self.current_file_dialog_mapping = "lc_new_list_file"
+        lc_new_list_file = self.ui_lc_new_list_file.get_text()
+        self.ui_file_dialog.show()
+        if lc_new_list_file != "":
+            self.ui_file_dialog.set_filename(lc_new_list_file)
+        else:
+            self.ui_file_dialog.set_current_name("")
+
+    #when the log file browse button for "list compare" is pressed...
+    def on_lc_log_file_browse_clicked(self, *args):
+        self.current_file_dialog_mapping = "lc_log_file"
+        lc_log_file = self.ui_lc_log_file.get_text()
+        self.ui_file_dialog.show()
+        if lc_log_file != "":
+            self.ui_file_dialog.set_filename(lc_log_file)
+        else:
+            self.ui_file_dialog.set_current_name("")
+
+    #when an existing list file for "list compare" is selected...
+    def on_lc_exist_list_file_set(self, *args):
+        exist_list_filename = self.ui_lc_exist_list_file.get_filename()
+        exist_list_file = open(exist_list_filename, 'r')
+        linenumber = 0
+        try:
+            for line in exist_list_file:
+                linenumber = linenumber + 1
+                line = unicode(line, 'utf8')
+                line = line.rstrip('\n')
+                if linenumber == 3:
+                    valid_file_timestamp = line[:10]
+                    timestamp = line[11:]
+                elif linenumber == 4:
+                    valid_file_dir = line[:10]
+                    directory = line[11:]
+                elif linenumber == 5:
+                    valid_file_algs_used = line[:18]
+                    algs_used = line[19:]
+                    break
+                else:
+                    pass
+            if valid_file_timestamp == "Timestamp:" and valid_file_dir == "Directory:" and valid_file_algs_used == "Algorithm(s) Used:":
+                self.ui_lc_exist_list_file_timestamp.set_text(timestamp)
+                self.ui_lc_exist_list_file_algs_used.set_text(algs_used)
+                self.ui_lc_exist_list_file_dir.set_text(directory)
+                self.ui_lc_exist_list_file_dir.show()
+            else:
+                raise
+        except:
+            self.ui_lc_exist_list_file_timestamp.set_text("Error: Invalid list file selected.")
+            self.ui_lc_exist_list_file_algs_used.set_text("Error: Invalid list file selected.")
+            self.ui_lc_exist_list_file_dir.set_text("Error: Invalid list file selected.")
+            self.ui_lc_exist_list_file_dir.show()
+        exist_list_file.close()
+
+    #generates the string of the "list compare" command after retrieving the current values of the corresponding GUI widgets
+    def get_lc_command(self, *args):
+        self.lc_exist_list_file = self.ui_lc_exist_list_file.get_filename()
+        self.lc_mirror = self.ui_lc_mirror.get_text()
+        self.lc_mirror = unicode(self.lc_mirror, 'utf8')
+        self.lc_report_file = self.ui_lc_report_file.get_text()
+        self.lc_report_file = unicode(self.lc_report_file, 'utf8')
+        self.lc_new_list_file = self.ui_lc_new_list_file.get_text()
+        self.lc_new_list_file = unicode(self.lc_new_list_file, 'utf8')
+        self.lc_log_file = self.ui_lc_log_file.get_text()
+        self.lc_log_file = unicode(self.lc_log_file, 'utf8')
+        command = self.masshash + " compare"
+        sp_command = [self.masshash]
+        sp_command.append("compare")
+        try:
+            if self.lc_dir_toggled == 'mirror':
+                if self.lc_mirror != "":
+                    command = command + " -m " + '"' + self.lc_mirror + '"'
+                    sp_command.append("-m")
+                    sp_command.append(self.lc_mirror)
+                else:
+                    command = "Error: The mirror is not specified."
+                    raise
+            if self.lc_new_list_file_toggled == 'checked' and self.lc_new_list_file != "":
+                command = command + " -n " + '"' + self.lc_new_list_file + '"'
+                sp_command.append("-n")
+                sp_command.append(self.lc_new_list_file)
+            elif self.lc_new_list_file_toggled == 'checked' and self.lc_new_list_file == "":
+                command = "Error: The new list file is not specified."
+                raise
+            else:
+                pass
+            if self.lc_log_file_toggled == 'checked' and self.lc_log_file != "":
+                command = command + " -l " + '"' + self.lc_log_file + '"'
+                sp_command.append("-l")
+                sp_command.append(self.lc_log_file)
+            elif self.lc_log_file_toggled == 'checked' and self.lc_log_file == "":
+                command = "Error: The log file is not specified."
+                raise
+            else:
+                pass
+            if self.lc_exist_list_file != None:
+                self.lc_exist_list_file = unicode(self.lc_exist_list_file, 'utf8')
+                command = command + ' "' + self.lc_exist_list_file + '"'
+                sp_command.append(self.lc_exist_list_file)
+            else:
+                command = "Error: The existing list file is not specified."
+                raise
+            if self.lc_report_file != "":
+                command = command + ' "' + self.lc_report_file + '"'
+                sp_command.append(self.lc_report_file)
+            else:
+                command = "Error: The report file is not specified."
+                raise
+        except:
+            pass
+        self.command = command
+        self.sp_command = sp_command
+
+    #when the preview button for "list compare" is pressed...
+    def on_lc_preview_clicked(self, *args):
+        self.get_lc_command()
+        self.ui_preview_dialog.show()
+        self.ui_command.set_text(self.command)
+
+    #when the execute button for "list compare" is pressed...
+    def on_lc_execute_clicked(self, *args):
+        self.cancelled = False
+        self.get_lc_command()
+        self.execute_start()
+        self.ui_execute_output.set_text("Comparing list of hashes...")
+        self.sp = subprocess.Popen(self.sp_command, bufsize=4096, stdout=subprocess.PIPE)
+        data = None
+        while data == None:
+            time.sleep(0.1)
+            data = self.sp.poll()
+            while Gtk.events_pending():
+                Gtk.main_iteration()
+        if self.cancelled != True:
+            execute_output = self.sp.stdout.read()
+            self.ui_execute_output.set_text(execute_output)
+            self.execute_complete()
+
+    #when the main window is closed by the user...
+    def onDeleteWindow(self, *args):
+        Gtk.main_quit(*args)
+
+#build GUI using the glade file
+builder = Gtk.Builder()
+builder.add_from_file(glade)
+builder.connect_signals(GUI())
+
+#show main window and run the main loop
+window = builder.get_object("window1")
+window.show_all()
+Gtk.main()

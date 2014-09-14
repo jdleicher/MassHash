@@ -1,0 +1,525 @@
+#!/usr/bin/python2
+# -*- coding: UTF-8 -*-
+
+"""
+*************************************************************************
+MassHash - A set of file hashing tools
+Copyright (C) 2012 Jonathan Leicher
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*************************************************************************
+"""
+
+from __future__ import print_function
+import sys
+import os
+import datetime
+import time
+import hashlib
+import argparse
+
+#global variables
+programname = 'MassHash'
+singlefile = ''
+algorithm1 = ''
+algorithm2 = ''
+algorithm1name = ''
+algorithm2name = ''
+algorithmsused = ''
+titles = ''
+totalhashlength = 0
+existingfilename = ''
+directory = ''
+mirror = ''
+reportfilename = ''
+newfilelist = ''
+newfilestring = ''
+newfilename = ''
+logfilename = ''
+totalerrors = 0
+errormessage = ''
+
+#***************************
+#*--------Functions--------*
+#***************************
+#define variables based on selected hash algorithms
+def selectedalgorithms():
+    global algorithm1
+    global algorithm2
+    global algorithm1name
+    global algortthm2name
+    global algorithmsused
+    global titles
+    global totalhashlength
+    if algorithm1name == 'MD5':
+        algorithm1 = 'hashlib.md5()'
+        algorithmsused = "MD5"
+        totalhashlength = 32
+        titles = "==============MD5==============="
+    elif algorithm1name == 'SHA-1':
+        algorithm1 = 'hashlib.sha1()'
+        algorithmsused = "SHA-1"
+        totalhashlength = 40
+        titles = "=================SHA-1=================="
+    elif algorithm1name == 'SHA-224':
+        algorithm1 = 'hashlib.sha224()'
+        algorithmsused = "SHA-224"
+        totalhashlength = 56
+        titles = "========================SHA-224========================="
+    elif algorithm1name == 'SHA-256':
+        algorithm1 = 'hashlib.sha256()'
+        algorithmsused = 'SHA-256'
+        totalhashlength = 64
+        titles = "============================SHA-256============================="
+    elif algorithm1name == 'SHA-384':
+        algorithm1 = 'hashlib.sha384()'
+        algorithmsused = 'SHA-384'
+        totalhashlength = 96
+        titles = "============================================SHA-384============================================="
+    elif algorithm1name == 'SHA-512':
+        algorithm1 = 'hashlib.sha512()'
+        algorithmsused = "SHA-512"
+        totalhashlength = 128
+        titles = "============================================================SHA-512============================================================="
+    else:
+        pass
+    if algorithm2name == None:
+        algorithm2 = 'None'
+    elif algorithm2name == 'MD5':
+        algorithm2 = 'hashlib.md5()'
+        algorithmsused = algorithmsused+" & MD5"
+        totalhashlength = totalhashlength+33
+        titles = titles+" ==============MD5==============="
+    elif algorithm2name == 'SHA-1':
+        algorithm2 = 'hashlib.sha1()'
+        algorithmsused = algorithmsused+" & SHA-1"
+        totalhashlength = totalhashlength+41
+        titles = titles+" =================SHA-1=================="
+    elif algorithm2name == 'SHA-224':
+        algorithm2 = 'hashlib.sha224()'
+        algorithmsused = algorithmsused+" & SHA-224"
+        totalhashlength = totalhashlength+57
+        titles = titles+" ========================SHA-224========================="
+    elif algorithm2name == 'SHA-256':
+        algorithm2 = 'hashlib.sha256()'
+        algorithmsused = algorithmsused+" & SHA-256"
+        totalhashlength = totalhashlength+65
+        titles = titles+" ============================SHA-256============================="
+    elif algorithm2name == 'SHA-384':
+        algorithm2 = 'hashlib.sha384()'
+        algorithmsused = algorithmsused+" & SHA-384"
+        totalhashlength = totalhashlength+97
+        titles = titles+" ============================================SHA-384============================================="
+    elif algorithm2name == 'SHA-512':
+        algorithm2 = 'hashlib.sha512()'
+        algorithmsused = algorithmsused+" & SHA-512"
+        totalhashlength = totalhashlength+129
+        titles = titles+" ============================================================SHA-512============================================================="
+    else:
+        pass
+    titles = titles+" ===path/filename==="
+
+#generate a hash for a single file
+def generatesingle():
+    selectedalgorithms()
+    global singlefile
+    global algorithm1
+    alg1 = eval(algorithm1)
+    with open(singlefile,'rb') as f:
+        while True:
+            block = f.read(8192)
+            if not block:
+                break
+            alg1.update(block)
+    alg1hexdigest = alg1.hexdigest()
+    reportsummary = "The "+algorithm1name+" hash for "+'"'+singlefile+'"'+" is:\n"+alg1hexdigest
+    print (reportsummary.encode('utf8'))
+
+#generate a list of hashes for files in a specified directory (and all subdirectories)
+def generatelist():
+    selectedalgorithms()
+    global algorithm1
+    global algorithm2
+    global newfilelist
+    global newfilestring
+    global newfilename
+    global algorithmsused
+    global totalhashlength
+    global titles
+    global totalerrors
+    global directory
+
+    #redefine path so that it is absolute
+    directory = os.path.abspath(directory)
+
+    #define directory with and without the trailing slash
+    trailslash = directory[-1:]
+    if trailslash != "/":
+        directory = directory + "/"
+    directorylength = len(directory)
+    directorynoslash = directory[:-1] #directory string without the trailing slash
+
+    #get the date and time
+    dateandtime = datetime.datetime.now()
+    timestamp = dateandtime.strftime('%Y-%m-%d %H:%M')
+
+    #generate hashes
+    newfilelist = []
+    newfilelist.append("*********************************************************************************"+"\n")
+    newfilelist.append("This file is a list of hashes generated by "+programname+".  Do not modify."+"\n")
+    newfilelist.append("Timestamp: "+timestamp+"\n")
+    newfilelist.append("Directory: "+directorynoslash+"\n")
+    newfilelist.append("Algorithm(s) Used: "+algorithmsused+"\n")
+    newfilelist.append("*********************************************************************************"+"\n")
+    newfilelist.append(titles+"\n")
+    for dirpath, dirnames, filenames in os.walk(directory):
+        for filename in filenames:
+            alg1 = eval(algorithm1)
+            alg2 = eval(algorithm2)
+            pathfile = os.path.join(dirpath, filename)
+            pathfiledisplayed = "./"+pathfile[directorylength:]
+            try:
+                if algorithm2 == 'None':
+                    with open(pathfile,'rb') as f:
+                        while True:
+                            block = f.read(8192)
+                            if not block:
+                                break
+                            alg1.update(block)
+                    alg1hexdigest = alg1.hexdigest()
+                    line = alg1hexdigest+" "+(pathfiledisplayed)+"\n"
+                else:
+                    with open(pathfile,'rb') as f:
+                        while True:
+                            block = f.read(8192)
+                            if not block:
+                                break
+                            alg1.update(block)
+                            alg2.update(block)
+                    alg1hexdigest = alg1.hexdigest()
+                    alg2hexdigest = alg2.hexdigest()
+                    line = alg1hexdigest+" "+alg2hexdigest+" "+(pathfiledisplayed)+"\n"
+            except:
+                line = "Error: Unable to generate hash for "+pathfiledisplayed
+                print (line)
+                line = line+"\n"
+                totalerrors = totalerrors + 1
+            newfilelist.append(line)
+    newfilestring = ''.join(newfilelist)
+    if newfilename != None:
+        newfile_bytestring = newfilestring.encode('utf8')
+        newfilename = os.path.abspath(newfilename)
+        output = open(newfilename,'w')
+        print (newfile_bytestring, file=output)
+
+#compare 2 lists of hashes and output results to a file
+def comparelists():
+    global existingfilename
+    global algorithm1name
+    global algorithm2name
+    global directory
+    global mirror
+    global newfilelist
+    global newfilestring
+    global reportfilename
+    global newfilename
+    global logfilename
+
+    #redefine paths and filenames so that they are absolute
+    existingfilename = os.path.abspath(existingfilename)
+    reportfilename = os.path.abspath(reportfilename)
+    if logfilename != None:
+        logfilename = os.path.abspath(logfilename)
+
+    #set totals to zero
+    totalaltered = 0
+    totaldeleted = 0
+    totalnew = 0
+    totalmoved = 0
+    totalrenamed = 0
+
+    #open the existing hash file and obtain date, directory, and algorithms
+    existingfile = open(existingfilename, 'r')
+    linenumber = 0
+    try:
+        for line in existingfile:
+            linenumber = linenumber + 1
+            line = unicode(line, 'utf8')
+            line = line.rstrip('\n')
+            if linenumber == 3:
+                valid_file_date_gen = line[:10]
+                dategenerated = line[11:]
+            elif linenumber == 4:
+                valid_file_dir = line[:10]
+                directory = line[11:]
+                directory = directory + "/"
+            elif linenumber == 5:
+                valid_file_algs_used = line[:18]
+                algsused = line[19:]
+                break
+            else:
+                pass
+        if valid_file_date_gen == "Timestamp:" and valid_file_dir == "Directory:" and valid_file_algs_used == "Algorithm(s) Used:":
+            multiplealgs = algsused.find("&")
+            if multiplealgs == -1:
+                algorithm1name = algsused
+                algorithm2name = None
+            else:
+                algorithm1name = algsused[:(multiplealgs-1)]
+                algorithm2name = algsused[(multiplealgs+2):]
+        else:
+            raise
+    except:
+        print ("Error: invalid list file selected")
+
+    directoryinexistingfile = directory[:-1] #for use in the report file later
+
+    #if mirror of directory is selected, set directory variable to that path
+    if mirror != None:
+        sameormirror = "a mirror"
+        directory = mirror
+        directory = os.path.abspath(directory)
+    else:
+        sameormirror = "the same directory"
+
+    #execute generate list function
+    generatelist()
+
+    #reset the starting read point in the existing file
+    existingfile.seek(0)
+
+    #generate empty lists
+    altered = []
+    possiblydeleted = []
+    possiblynew = []
+    deleted = []
+    new = []
+    moved = []
+    renamed = []
+
+    #check for altered or possibly deleted files (search in new file against the existing file)
+    linenumber = 0
+    for line in existingfile:
+        linenumber = linenumber + 1
+        line = unicode(line, 'utf8')
+        linevalue = line.rstrip('\n')
+        pathvalue = linevalue[totalhashlength+1:]
+        if linenumber > 7:
+            linematch = newfilestring.find(linevalue)
+            pathmatch = newfilestring.find(pathvalue)
+            if linematch == -1 and pathmatch != -1:
+                altered.append(linevalue+"\n")
+                totalaltered = totalaltered + 1
+            elif linematch and pathmatch == -1:
+                possiblydeleted.append(linevalue+"\n")
+    alteredstring = ''.join(altered)
+    possiblydeletedstring = ''.join(possiblydeleted)
+
+    #reset the starting read point in the existing file
+    existingfile.seek(0)
+
+    #check for possibly new files (search in existing file against the new file)
+    linenumber = 0
+    existingfileread = existingfile.read()
+    existingfileread = unicode(existingfileread, 'utf8')
+    for line in newfilelist:
+        linenumber = linenumber + 1
+        linevalue = line.rstrip('\n')
+        pathvalue = linevalue[totalhashlength+1:]
+        if linenumber > 7:
+            linematch = existingfileread.find(linevalue)
+            pathmatch = existingfileread.find(pathvalue)
+            if linematch and pathmatch == -1:
+                possiblynew.append(linevalue+"\n")
+
+    #close the existing file
+    existingfile.close()
+
+    #check for deleted files and moved/renamed files (search in possiblynew list against the possiblydeleted list)
+    for line in possiblydeleted:
+        hashmatch = -1
+        linevalue = line.rstrip('\n')
+        pathvalue = linevalue[totalhashlength+1:]
+        filevalue = pathvalue[pathvalue.rindex('/'):]
+        hashvalue = linevalue[:totalhashlength]
+        for line in possiblynew:
+            linevalue2 = line
+            hashmatch = linevalue2.find(hashvalue)
+            if hashmatch != -1:
+                linevalue2 = linevalue2.rstrip('\n')
+                pathvalue2 = linevalue2[totalhashlength+1:]
+                filevalue2 = pathvalue2[pathvalue2.rindex('/'):]
+                if filevalue == filevalue2:
+                    moved.append(pathvalue+"  >>>  "+pathvalue2+"\n")
+                    totalmoved = totalmoved + 1
+                else:
+                    renamed.append(pathvalue+"  >>>  "+pathvalue2+"\n")
+                    totalrenamed = totalrenamed + 1
+                break
+        if hashmatch == -1:
+            deleted.append(linevalue+"\n")
+            totaldeleted = totaldeleted + 1
+    deletedstring = ''.join(deleted)
+    movedstring = ''.join(moved)
+    renamedstring = ''.join(renamed)
+
+    #check for new files (search in possiblydeleted list against the possiblynew list)
+    for line in possiblynew:
+        linevalue = line.rstrip('\n')
+        hashvalue = linevalue[:totalhashlength]
+        hashmatch = possiblydeletedstring.find(hashvalue)
+        if hashmatch == -1:
+            new.append(linevalue+"\n")
+            totalnew = totalnew + 1
+    newstring = ''.join(new)
+
+    #convert totals from integers into strings
+    totalaltered = str(totalaltered)
+    totaldeleted = str(totaldeleted)
+    totalnew = str(totalnew)
+    totalmoved = str(totalmoved)
+    totalrenamed = str(totalrenamed)
+
+    #get the date and time
+    dateandtime = datetime.datetime.now()
+    dateandtime = dateandtime.strftime('%Y-%m-%d %H:%M')
+
+    #define and print the totals for the report file
+    reportsummarytotals = "Altered: "+totalaltered+", Deleted: "+totaldeleted+", New: "+totalnew+", Moved: "+totalmoved+", Renamed: "+totalrenamed
+    reportsummary = ("Complete.\n"+"Totals = "+reportsummarytotals+"\n" +'See "'+reportfilename+ '" for details.').encode('utf8')
+    print (reportsummary)
+
+    #generate the report file
+    reportfilestringlist = []
+    reportfilestringlist.append("*********************************************************************************\n")
+    reportfilestringlist.append(programname+" Comparison Report File\n")
+    reportfilestringlist.append("Timestamp: "+dateandtime+"\n")
+    reportfilestringlist.append("Existing List File used: "+existingfilename+"\n")
+    reportfilestringlist.append("Directory in Existing File: "+directoryinexistingfile+"\n")
+    reportfilestringlist.append("Compared to: "+sameormirror+"\n")
+    if mirror != None:
+        directory = directory[:-1]
+        reportfilestringlist.append("Mirror: "+directory+"\n")
+    if newfilename != None:
+        reportfilestringlist.append("New List File generated: "+newfilename+"\n")
+    reportfilestringlist.append("Totals = "+reportsummarytotals+"\n")
+    reportfilestringlist.append("*********************************************************************************\n")
+    reportfilestringlist.append("\n<<<<<--Altered-->>>>>\n"+titles+"\n")
+    reportfilestringlist.append(alteredstring)
+    reportfilestringlist.append("\n<<<<<--Deleted-->>>>>\n"+titles+"\n")
+    reportfilestringlist.append(deletedstring)
+    reportfilestringlist.append("\n<<<<<--New-->>>>>\n"+titles+"\n")
+    reportfilestringlist.append(newstring)
+    reportfilestringlist.append("\n<<<<<--Moved-->>>>>\n")
+    reportfilestringlist.append(movedstring)
+    reportfilestringlist.append("\n<<<<<--Renamed-->>>>>\n")
+    reportfilestringlist.append(renamedstring)
+    reportfilestring = ''.join(reportfilestringlist)
+    reportfilestring = reportfilestring.encode('utf8')
+    reportfile = open(reportfilename, 'w')
+    print (reportfilestring, file=reportfile)
+    reportfile.close()
+
+    #print the summary of the report file to a log file (if applicable)
+    if logfilename != None:
+        logfile = open(logfilename, 'a')
+        logentry = (dateandtime + ' - Totals in "' + reportfilename + '" = ' + reportsummarytotals).encode('utf8')
+        print (logentry, file=logfile)
+        logfile.close()
+
+#***************************
+#*----------CLI------------*
+#***************************
+#main parser
+parser = argparse.ArgumentParser(description=programname+" - A set of file hashing tools")
+subparsers = parser.add_subparsers(title='valid subcommands', dest='subparser_name')
+
+#version argument
+parser.add_argument("--version", action='version', version="MassHash 1.0, Copyright (C) 2012 Jonathan Leicher, License: GPLv3+", help="version of program")
+
+#subparser for generating a hash for a single file
+parser_generatesingle = subparsers.add_parser('single', formatter_class=argparse.RawDescriptionHelpFormatter, description="""Generate a hash for a single file.
+Available algorithms: MD5, SHA-1, SHA-224, SHA-256, SHA-384, and SHA-512""", help="generate a hash for a single file")
+parser_generatesingle_required = parser_generatesingle.add_argument_group("required arguments")
+parser_generatesingle_required.add_argument(metavar="ALGORITHM", dest='generatesingle_algorithm', help="algorithm to be used")
+parser_generatesingle_required.add_argument(metavar="FILE", dest='generatesingle_filename', help="path/name of the file to be hashed")
+
+#subparser for generating a list of hashes for files in a directory (and subdirectories)
+parser_generatelist = subparsers.add_parser('list', formatter_class=argparse.RawDescriptionHelpFormatter, description="""Generate a list of hashes for files in a directory (and subdirectories).
+Available algorithms: MD5, SHA-1, SHA-224, SHA-256, SHA-384, and SHA-512""", help="generate list of hashes")
+parser_generatelist.add_argument("-b", "--ALGORITHM2", metavar='', dest='generatelist_algorithm2', help="2nd algorithm to be used")
+parser_generatelist_required = parser_generatelist.add_argument_group("required arguments")
+parser_generatelist_required.add_argument(metavar="ALGORITHM1", dest='generatelist_algorithm1', help="1st (or only) algorithm to be used")
+parser_generatelist_required.add_argument(metavar="DIRECTORY", dest='generatelist_directory', help="path/name of the directory")
+parser_generatelist_required.add_argument(metavar="NEWFILE", dest='generatelist_newfile', help="path/name of the new list file")
+
+#subparser for comparing two lists of hashes
+parser_comparelists = subparsers.add_parser('compare', formatter_class=argparse.RawDescriptionHelpFormatter, description="""Compare a list of hashes generated by the "list"
+subcommand to the same directory, or a mirror.""", help="compare list of hashes")
+parser_comparelists.add_argument("-m", "--MIRROR", metavar='', dest='comparelists_mirror', help="path/name of the local mirror")
+parser_comparelists.add_argument("-n", "--NEWFILE", metavar='', dest='comparelists_newfile', help="path/name of the new list file")
+parser_comparelists.add_argument("-l", "--LOGFILE", metavar='', dest='comparelists_logfilename', help="path/name of the log file")
+parser_comparelists_required = parser_comparelists.add_argument_group("required arguments")
+parser_comparelists_required.add_argument(metavar="EXISTFILE", dest='comparelists_existingfile', help="path/name of the existing list file")
+parser_comparelists_required.add_argument(metavar="REPORTFILE", dest='comparelists_reportfile', help="path/name of the report file")
+
+#parse the arguments
+args = parser.parse_args()
+subparserselected = args.subparser_name
+
+#execute functions depending upon subcommand selection
+if subparserselected == 'single':
+    starttime = time.time()
+    algorithm1name = args.generatesingle_algorithm
+    algorithm1name = algorithm1name.upper()
+    singlefile = unicode(args.generatesingle_filename, 'utf8')
+    print ("Generating hash...")
+    generatesingle()
+    totaltime = str(datetime.timedelta(seconds=(time.time() - starttime)))
+    print ("Total Processing Time (H:M:S): "+totaltime)
+elif subparserselected == 'list':
+    starttime = time.time()
+    algorithm2name = args.generatelist_algorithm2
+    if algorithm2name != None:
+        algorithm2name = algorithm2name.upper()
+    algorithm1name = args.generatelist_algorithm1
+    algorithm1name = algorithm1name.upper()
+    directory = unicode(args.generatelist_directory, 'utf8')
+    newfilename = unicode(args.generatelist_newfile, 'utf8')
+    print ("Generating list of hashes...")
+    generatelist()
+    totalerrors = str(totalerrors)
+    print ("Complete.  Errors: "+totalerrors)
+    print (('See "'+newfilename+'" for details.').encode('utf8'))
+    totaltime = str(datetime.timedelta(seconds=(time.time() - starttime)))
+    print ("Total Processing Time (H:M:S): "+totaltime)
+elif subparserselected == 'compare':
+    starttime = time.time()
+    mirror = args.comparelists_mirror
+    if mirror != None:
+        mirror = unicode(mirror, 'utf8')
+    newfilename = args.comparelists_newfile
+    if newfilename != None:
+        newfilename = unicode(newfilename, 'utf8')
+    logfilename = args.comparelists_logfilename
+    if logfilename != None:
+        logfilename = unicode(logfilename, 'utf8')
+    existingfilename = unicode(args.comparelists_existingfile, 'utf8')
+    reportfilename = unicode(args.comparelists_reportfile, 'utf8')
+    print ("Comparing list of hashes...")
+    comparelists()
+    totaltime = str(datetime.timedelta(seconds=(time.time() - starttime)))
+    print ("Total Processing Time (H:M:S): "+totaltime)
+else:
+    pass

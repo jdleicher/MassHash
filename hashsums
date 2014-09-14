@@ -1,0 +1,13 @@
+****************************************************
+These are the hashsums for all MassHash 1.0.0 files:
+****************************************************
+==============MD5=============== =================SHA-1================== ===path/filename===
+d32239bcb673463ab874e80d47fae504 8624bcdae55baeef00cd11d5dfcfa60f68710a02 ./COPYING
+c5f36cb22a008512bad587f07388fe27 04419587aea238f47bb1f18c9137088c6b3be787 ./AUTHORS
+acc03f1b3c69b13e1c283886550af970 0a47dc10a808c8cf88331b57d978cb3991b7d911 ./README.md
+d75b0f173af30c8cabcba1e9027f7d8e c22454974860a245df2ca2c41540dcc313a34f35 ./python3/masshash
+7a33ca382d48937f151649c83ec3ee42 5bbe9c8b44e145bd69d79b4f5c158182c0d4d74e ./python3/masshash-launcher
+58fae3b736d500cfbfdf2988bbabeba4 f0320d26f8b156e4b851ca960ee41438ee76052e ./python2/masshash
+f54f17d05fb0e679e0a19e5f242e3a7c 8e20f8f83b8c333e5d9582039c5f89619f9670a2 ./python2/masshash-launcher
+3c0ae2da9f16ddc11c372284e08d700f be1eb51a968f6be8ea91ca310621c1e93e10715e ./data/masshash-launcher.glade
+2fb5d26fffd2229400c35dadce93e9de 7fcfcdfb923d4d5c36d7198b1c3a3b981f4a8dc5 ./data/masshash-launcher.svg
