@@ -1,42 +1,142 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>MassHash by jdleicher</title>
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="javascripts/scale.fix.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<head>
+    <style>
+        wrapper, header, section, footer, nav,  {
+            display: block;
+        } 
+        html, body {
+            background: #069f06;
+            background: #069f06 linear-gradient(#069f06, #8a8a8a) fixed;
+        }
+        header {
+            position: fixed;
+            height: 100px;
+            top: 0;
+            left: 0;
+            right: 0;
+            border-width: 1px;
+            border-style: solid;
+            border-color: black;
+            background-color:#3b3b3b;
+            background: #3b3b3b linear-gradient(#3b3b3b, #ffffff) fixed;
+            color:#fdffff;
+            padding:5px;
+            border-radius: 0 0 11px 11px;
+        }
+            header logo {
+                display: block;
+                position: relative;
+                float:left;
+                margin-left: 8px;
+                vertical-align:middle;
+            }
+            header h1 {
+                display: block;
+                position: relative;
+                float:left;
+                margin-left: 8px;
+                text-align:left;
+                font-size: 36px;
+            }
+                header h1 subheader {
+                    display: block;
+                    margin-left: 4px;
+                    font-size: 18px;
+                }
+            header jumps {
+                display: block;
+                position: relative;
+                float:right;
+                margin: auto 20px; auto;
+            }
+        .anchor{padding-top:151px;z-index:-1;}
+        section {
+            width: 900px;
+            margin:111px auto 0px;
+            border-width: 1px;
+            border-style: solid;
+            border-color: black;
+            background-color:#e8e8e8;
+            padding:10px;
+        }
+        footer {
+            position: fixed;
+            height:20px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-width: 1px;
+            border-style: solid;
+            border-color: black;
+            background-color:#3b3b3b;
+            color:white;
+            clear:both;
+            text-align:center;
+            padding:5px;
+            border-radius: 11px 11px 0 0;
+        }
+    </style>
+</head>
 
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <h1>MassHash</h1>
-        <p>A set of file hashing tools</p>
-        <p class="view"><a href="https://github.com/jdleicher/MassHash">View the Project on GitHub <small>jdleicher/MassHash</small></a></p>
-        <ul>
-          <li><a href="https://github.com/jdleicher/MassHash">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h1>
-<a name="masshash" class="anchor" href="#masshash"><span class="octicon octicon-link"></span></a>MassHash</h1>
+<body>
+    <wrapper>
+        <header>
+            <logo>
+                <img src="images/logo.svg"/>
+            </logo>
+            <h1>
+                 MashHash <subheader>A set of file hashing tools</subheader>
+            </h1>
+            <jumps>
+            <a href="#about">About</a><br>
+            <a href="#screenshots">Screenshots</a><br>
+            <a href="#downloads">Downloads</a><br>
+            <a href="#support">Support</a><br>
+            </jumps>
+        </header>
 
-<p>A set of file hashing tools
-kljkljlkjlk</p>
-      </section>
-    </div>
-    <footer>
-      <p>Project maintained by <a href="https://github.com/jdleicher">jdleicher</a></p>
-      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
-    </footer>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-    
-  </body>
+        <section>
+<p>
+!!! NOTE:  THIS HOME PAGE FOR MASSHASH IS CURRENTLY UNDER CONSTRUCTION. HOPE TO HAVE COMPLETED SOON.!!!
+</p>
+        <h1><a class="anchor" id="about">About</a></h1>
+        <p>
+        MassHash is a set of file hashing tools for the command-line. A GTK+ GUI called MassHash Launcher
+is also available for executing MassHash commands. Both are open source, written in Python, and released under the GNU GPLv3 license.<br>
+        <br>
+        Features :
+            <ul>
+                <li>Supported algorithms include: MD5, SHA-1, SHA-224, SHA-256, SHA-384, SHA-512</li>
+                <li>Generate a hash for a single file</li>
+                <li>Generate a list (plain text file) of hashes for all files in a directory (and subdirectories)</li>
+                <li>Compare a previously generated list of hashes against the same directory (or mirror)</li>
+            </ul>
+        <h1><a class="anchor" id="screenshots">Screenshots</a></h1>
+        <p>
+        MassHash Launcher running on GNU/Linux:<br>
+        <br>
+            <img src="images/gtk-launcher-1.png" style="width:383px;height:481px;margin-left:55px;">
+        <img src="images/gtk-launcher-2.png" style="width:383px;height:481px;margin-left:20px;">
+        </p>
+        <h1><a class="anchor" id="downloads">Downloads</a></h1>
+        <h1><a class="anchor" id="support">Support</a></h1>
+
+        <p>
+        Blah blahBlah blahBlah blah
+
+        Blah blahBlah blahBlah blahBlah blahBlah end
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+        </p>
+        </section>
+        <footer>
+        Copyright &#169; 2014 Jonathan Leicher
+        </footer>
+    </wrapper>
+</body>
+
 </html>
+
