@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        wrapper, header, section, footer, nav,  {
+            display: block;
+        } 
+        html, body {
+            background: #069f06;
+            background: #069f06 linear-gradient(#069f06, #8a8a8a) fixed;
+        }
+        header {
+            position: fixed;
+            height: 100px;
+            top: 0;
+            left: 0;
+            right: 0;
+            border-width: 1px;
+            border-style: solid;
+            border-color: black;
+            background-color:#3b3b3b;
+            background: #3b3b3b linear-gradient(#3b3b3b, #fdffff) fixed;
+            color:black;
+            padding:5px;
+            border-radius: 0 0 11px 11px;
+            box-shadow: 0px 0px 20px black;
+        }
+            header a:link {color:#fdffff;}
+            header a:visited {color:#fdffff;}
+            header a:active {color:red;}
+            header name {
+                display: block;
+                height: 78px;
+                position: relative;
+                float:left;
+                margin: 5px 10px;
+                padding: 5px;
+                background-color:#5f5f5f;
+                text-align:left;
+                font-size: 36px;
+                border-width: 1px;
+                border-style: solid;
+                border-color: #fdffff;
+                border-radius: 11px 11px;
+                box-shadow: 0px 0px 10px black;
+            }
+            header name logo {
+                display: block;
+                position: relative;
+                float:left;
+                margin-left: 8px;
+                vertical-align:middle;
+            }
+            header h1 {
+                display: block;
+                position: relative;
+                float:left;
+                margin-top: 4px;
+                margin-left: 8px;
+                text-align:left;
+                font-size: 36px;
+                text-shadow: 0px 0px 1px #fdffff;
+                padding: 5px;
+            }
+                header h1 description {
+                    display: block;
+                    margin-right: 8px;
+                    font-size: 18px;
+                }
+            header jumps {
+                display: block;
+                position: relative;
+                float:right;
+                margin: 30px 10px;
+                padding: 10px;
+                background-color:#5f5f5f;
+                text-align:center;
+                border-width: 1px;
+                border-style: solid;
+                border-color: #fdffff;
+                border-radius: 11px 11px;
+                box-shadow: 0px 0px 10px black;
+            }
+
+        .anchor{padding-top:131px;z-index:-1;}
+        section {
+            width: 900px;
+            margin:111px auto 0;
+            border-width: 1px;
+            border-style: solid;
+            border-color: black;
+            background-color:#e8e8e8;
+            padding: 0px 10px 900px;
+            box-shadow: 0px 0px 20px black;
+        }
+        footer {
+            position: fixed;
+            height:20px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-width: 1px;
+            border-style: solid;
+            border-color: black;
+            background-color:#3b3b3b;
+            background: #3b3b3b linear-gradient(#fdffff, #3b3b3b) fixed;
+            color:#fdffff;
+            clear:both;
+            text-align:center;
+            padding:5px;
+            border-radius: 11px 11px 0 0;
+            box-shadow: 0px 0px 20px black;
+        }
+    </style>
+</head>
+
+<body>
+    <wrapper>
+        <header>
+            <a href="#about">
+            <name>
+            <logo>
+                <img src="images/logo.svg" style="width:78px;height:78px">
+            </logo>
+            <h1>
+                MassHash
+                <br>
+                <description>A set of file hashing tools</description>
+            </h1>
+            </name>
+            </a>
+            <jumps>
+            <a href="#about">About</a> | 
+            <a href="#screenshots">Screenshots</a> | 
+            <a href="#downloads">Downloads</a> | 
+            <a href="#support">Support</a><br>
+            </jumps>
+        </header>
+
+        <section>
+        <h1><a class="anchor" id="about">About</a></h1>
+        <p>
+        MassHash is a set of file hashing tools for the command-line. A GTK+ GUI called MassHash Launcher
+is also available for executing MassHash commands. Both are open source, written in Python, and released under the GNU GPLv3 license.<br>
+        <br>
+        Features :
+            <ul>
+                <li>Supported algorithms include: MD5, SHA-1, SHA-224, SHA-256, SHA-384, SHA-512</li>
+                <li>Generate a hash for a single file</li>
+                <li>Generate a list (plain text file) of hashes for all files in a directory (and subdirectories)</li>
+                <li>Compare a previously generated list of hashes against the same directory (or mirror)</li>
+            </ul>
+        </p>
+        <hr>
+        <h1><a class="anchor" id="screenshots">Screenshots</a></h1>
+        <p>
+        MassHash Launcher running on GNU/Linux:<br>
+        <br>
+            <img src="images/gtk-launcher-1.png" style="width:383px;height:481px;margin-left:55px;box-shadow: 0px 0px 10px black;border-radius: 8px 8px 0 0;">
+            <img src="images/gtk-launcher-2.png" style="width:383px;height:481px;margin-left:20px;box-shadow: 0px 0px 10px black;border-radius: 8px 8px 0 0;">
+        </p>
+        <hr>
+        <h1><a class="anchor" id="downloads">Downloads</a></h1>
+        <h4 style="margin-left:30px;">Source code</h4>
+        <p style="margin-left:50px;">
+        Current Release: <a href="https://github.com/jdleicher/MassHash/releases/download/1.0.0/masshash-1.0.0.tar.gz">masshash-1.0.0.tar.gz</a>
+        <br><br>
+        Hashsums for masshash-1.0.0.tar.gz:<br>
+        MD5 - c7f184c6e934065fd63b58de6b34fe2a<br>
+        SHA-256 - 8e9e1f84c5942676188b9c9aac4b6251f4a5cd33c25ed925678b0bff73515cc5<br>
+        </p>
+        <h4 style="margin-left:30px;">Repositories</h4>
+        <p style="margin-left:50px;">
+        <!--Arch Linux AUR: <a href="https://aur.archlinux.org/packages/masshash/">Package...</a>-->
+        Arch Linux AUR: (Package available soon...)
+        </p>
+        <hr>
+        <h1><a class="anchor" id="support">Support</a></h1>
+        <p>
+        This project is hosted from GitHub, and maintained by <a href="https://github.com/jdleicher">jdleicher</a>.
+        <br><br>
+        Check out the <a href="https://github.com/jdleicher/MassHash/">project page</a> for:
+            <ul>
+                <li>information on dependencies, installation, usage, etc.</li>
+                <li>code review</li>
+                <li>bugs/issues</li>
+            </ul>
+        </p>
+        <hr>
+        </section>
+        <footer>
+        Copyright &#169; 2014 Jonathan Leicher
+        </footer>
+    </wrapper>
+</body>
+
+</html>
+
