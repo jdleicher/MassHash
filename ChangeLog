@@ -1,0 +1,18 @@
+MassHash 1.0.1
+==============
+
+  Released: 2014-10-17
+
+  MassHash Launcher (1.0.1)
+  -------------------------
+
+    * Changed starting position of main window to center of screen
+    * Changed 'MassHash Command Execution' dialog box to be modal
+    * Updated version information which appears in 'About' dialog box to Semantic Versioning
+    * Fixed closing dialog boxes bug
+    * Fixed 'MassHash Info' dialog box missing second line in 'Output' box (Python 3)
+
+  MassHash (1.0.1)
+  ----------------
+
+    * Updated version output to Semantic Versioning

@@ -111,7 +111,7 @@ class GUI:
         self.sp_command.append("--version")
         self.execute_start()
         self.ui_execute_output.set_text("MassHash version info...")
-        self.sp = subprocess.Popen(self.sp_command, bufsize=4096, stderr=subprocess.PIPE)
+        self.sp = subprocess.Popen(self.sp_command, bufsize=4096, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         data = None
         while data == None:
             time.sleep(0.1)
@@ -119,7 +119,7 @@ class GUI:
             while Gtk.events_pending():
                 Gtk.main_iteration()
         if self.cancelled != True:
-            execute_output = self.sp.stderr.read()
+            execute_output = self.sp.stdout.read()
             self.ui_execute_output.set_text("MassHash version info...\n"+execute_output)
             self.execute_complete()
 

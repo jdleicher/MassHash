@@ -446,7 +446,7 @@ parser = argparse.ArgumentParser(description=programname+" - A set of file hashi
 subparsers = parser.add_subparsers(title='valid subcommands', dest='subparser_name')
 
 #version argument
-parser.add_argument("--version", action='version', version="MassHash 1.0, Copyright (C) 2012 Jonathan Leicher, License: GPLv3+", help="version of program")
+parser.add_argument("--version", action='version', version="MassHash 1.0.1, Copyright (C) 2012 Jonathan Leicher, License: GPLv3+", help="version of program")
 
 #subparser for generating a hash for a single file
 parser_generatesingle = subparsers.add_parser('single', formatter_class=argparse.RawDescriptionHelpFormatter, description="""Generate a hash for a single file.
